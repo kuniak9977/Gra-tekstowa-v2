@@ -7,15 +7,46 @@ using System.Threading.Tasks;
 
 namespace Gra_tekstowa_v2
 {
-    public class Projectile
+    public class Projectile// : IEquatable<Projectile>
     {
         //public Position pos;
+        int id;
         double X, Y;
         int roundedX, roundedY;
         char shoot = '*';
         public double speed;
         public int damage;
         string direction;
+        private HashSet<int> usedIds = new HashSet<int>();
+        private Queue<int> recycledIds = new Queue<int>();
+
+        public int GetUniqueId()
+        {
+            if (recycledIds.Count > 0)
+            {
+                int recycledId = recycledIds.Dequeue();
+                usedIds.Add(recycledId);
+                return recycledId;
+            }
+            else
+            {
+                int newId = usedIds.Count + 1;
+                usedIds.Add(newId);
+                return newId;
+            }
+        }
+        public void RecycleId(int id)
+        {
+            if (usedIds.Contains(id))
+            {
+                usedIds.Remove(id);
+                recycledIds.Enqueue(id);
+            }
+            else
+            {
+                throw new InvalidOperationException("Trying to recycle an ID that is not in use.");
+            }
+        }
 
         public Projectile(int x, int y, string direction)
         {
@@ -24,6 +55,7 @@ namespace Gra_tekstowa_v2
             this.speed = 1;
             this.damage = 1;
             this.direction = direction;
+            this.id = GetUniqueId();
         }
 
         public void DrawProjectile()
@@ -31,26 +63,18 @@ namespace Gra_tekstowa_v2
             Console.SetCursorPosition(roundedX, roundedY);
             Console.Write(shoot);
         }
-        public bool Kolizja(Rooms pokoj)
+        
+        public bool ColisionWithWall(Rooms pokoj)
         {
             Rooms rooms = pokoj;
-            int index = 0;
-            for (int i = 0; i <= roundedY; i++)
-            {
-                for (int j = 0; j <= roundedX; j++)
-                {
-                    index++;
-
-                }
-            }
-            char[] tablicaznakow = rooms.rooms[0];
-            char wybranyznak = tablicaznakow[index];
-            if (wybranyznak == '█')
-            {
-                
-            }
+            char[,] znaki = rooms.rooms[0];
+            char znak = znaki[roundedY, roundedX];
+            
+            if (znak == '█')
+                return true;
+            return false;
         }
-        public void Update(Rooms pokoj)
+        public void Update()
         {
             
             switch (direction)
@@ -88,7 +112,6 @@ namespace Gra_tekstowa_v2
         char head = 'Q';
         char body = 'X';
         public string lookingdirection;
-        public List<Projectile> projectiles;
 
         public Player()
         {
@@ -97,7 +120,6 @@ namespace Gra_tekstowa_v2
             this.lvl = 0;
             this.HealthPoints = 3;
             this.lookingdirection = "east";
-            this.projectiles = new List<Projectile>();
         }
 
         public void DrawPlayer()

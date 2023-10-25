@@ -27,8 +27,16 @@ namespace Gra_tekstowa_v2
         {
             Console.Clear();
             Console.SetCursorPosition(0, 0);
-            char[] room = rooms.rooms[0];
-            Console.Write(room);
+            char[,] roomschar = rooms.rooms[0];
+            int numRows = roomschar.GetLength(0);
+            int numCol = roomschar.GetLength(1);
+            for (int i = 0; i < numRows; i++)
+            {
+                for (int j = 0; j < numCol; j++)
+                {
+                    Console.Write(roomschar[i, j]);
+                }
+            }
         }
     }
 }

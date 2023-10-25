@@ -8,30 +8,47 @@ namespace Gra_tekstowa_v2
         {
             Render render = new Render();
             Player player = new Player();
+            List<Projectile> bullets = new List<Projectile>();
 
             ConsoleKeyInfo cki;
             ConsoleKey keyPressed;
             Console.CursorVisible = false;
             Thread screeThread = new Thread(ScreenRefresh);
-            Thread bulletsThread = new Thread(BulletsUpdate);
+            //Thread bulletsThread = new Thread(BulletsUpdate);
             Thread playerThread = new Thread(PlayerAction);
             screeThread.Start();
             playerThread.Start();
-            bulletsThread.Start();
+            //bulletsThread.Start();
 
 
 
             void ScreenRefresh()
             {
+                render.DrawRoom();
                 while (true)
                 {
-                    Console.Clear();
-                    render.DrawRoom();
+                    //Console.Clear();
                     player.DrawPlayer();
-                    foreach (var thing in player.projectiles)
+                    for (int i = 0; i < bullets.Count; i++)
                     {
-                        thing.DrawProjectile();
-                    }
+                        Projectile p = bullets[i];
+                        p.Update();
+                        if (p.ColisionWithWall(render.rooms))
+                        {
+                            bullets.Remove(p);
+                            i--; // zmniejsz indeks, ponieważ usunięto element, a reszta przesunęła się o jeden w lewo
+                        }
+                        else
+                            p.DrawProjectile();
+                    }/*
+                    foreach (Projectile p in bullets)
+                    {
+                        p.Update();
+                        if(p.ColisionWithWall(render.rooms))
+                            bullets.Remove(p);
+                        if (bullets.Contains(p))
+                            p.DrawProjectile();
+                    }*/
                     Thread.Sleep(32);
                 }
             }
@@ -39,9 +56,11 @@ namespace Gra_tekstowa_v2
             {
                 while(true)
                 {
-                    foreach (var thing in player.projectiles)
+                    foreach (var thing in bullets)
                     {
-                        thing.Update(render.rooms);
+                        thing.Update();
+                        //if(thing.Kolizja(render.rooms))
+                        //    player.projectiles.Remove(thing);
                     }
                     Thread.Sleep(32);
                 }
@@ -72,7 +91,7 @@ namespace Gra_tekstowa_v2
                             break;
                         case ConsoleKey.Spacebar:
                             Projectile bullet = new Projectile(player.pos.x, player.pos.y, player.lookingdirection);
-                            player.projectiles.Add(bullet);
+                            bullets.Add(bullet);
                             break;
                     }
                     Thread.Sleep(32);
