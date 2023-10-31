@@ -14,13 +14,10 @@ namespace Gra_tekstowa_v2
             ConsoleKey keyPressed;
             Console.CursorVisible = false;
             Thread screeThread = new Thread(ScreenRefresh);
-            //Thread bulletsThread = new Thread(BulletsUpdate);
+
             Thread playerThread = new Thread(PlayerAction);
             screeThread.Start();
             playerThread.Start();
-            //bulletsThread.Start();
-
-
 
             void ScreenRefresh()
             {
@@ -32,6 +29,7 @@ namespace Gra_tekstowa_v2
                     for (int i = 0; i < bullets.Count; i++)
                     {
                         Projectile p = bullets[i];
+                        p.ClearLastPosition(render.rooms);
                         p.Update();
                         if (p.ColisionWithWall(render.rooms))
                         {
@@ -40,57 +38,46 @@ namespace Gra_tekstowa_v2
                         }
                         else
                             p.DrawProjectile();
-                    }/*
-                    foreach (Projectile p in bullets)
-                    {
-                        p.Update();
-                        if(p.ColisionWithWall(render.rooms))
-                            bullets.Remove(p);
-                        if (bullets.Contains(p))
-                            p.DrawProjectile();
-                    }*/
-                    Thread.Sleep(32);
-                }
-            }
-            void BulletsUpdate()
-            {
-                while(true)
-                {
-                    foreach (var thing in bullets)
-                    {
-                        thing.Update();
-                        //if(thing.Kolizja(render.rooms))
-                        //    player.projectiles.Remove(thing);
                     }
                     Thread.Sleep(32);
                 }
             }
+
             void PlayerAction()
             {
                 while (true)
                 {
                     cki = Console.ReadKey(true);
                     keyPressed = cki.Key;
+                    player.ClearLastPosition(render.rooms);
                     switch (keyPressed)
                     {
                         case ConsoleKey.A:
-                            player.pos.x -= 1;
+                            //player.X -= 1;
+                            player.roundedX = (int)Math.Round(player.X -= player.speed);
+                            player.roundedY = (int)Math.Round(player.Y);
                             player.lookingdirection = "west";
                             break;
                         case ConsoleKey.W:
-                            player.pos.y -= 1;
+                            //player.Y -= 1;
+                            player.roundedX = (int)Math.Round(player.X);
+                            player.roundedY = (int)Math.Round(player.Y -= player.speed);
                             player.lookingdirection = "north";
                             break;
                         case ConsoleKey.S:
-                            player.pos.y += 1;
+                            //player.Y += 1;
+                            player.roundedX = (int)Math.Round(player.X);
+                            player.roundedY = (int)Math.Round(player.Y += player.speed);
                             player.lookingdirection = "south";
                             break;
                         case ConsoleKey.D:
-                            player.pos.x += 1;
+                            //player.X += 1;
+                            player.roundedX = (int)Math.Round(player.X += player.speed);
+                            player.roundedY = (int)Math.Round(player.Y);
                             player.lookingdirection = "east";
                             break;
                         case ConsoleKey.Spacebar:
-                            Projectile bullet = new Projectile(player.pos.x, player.pos.y, player.lookingdirection);
+                            Projectile bullet = new Projectile(player.roundedX, player.roundedY, player.lookingdirection);
                             bullets.Add(bullet);
                             break;
                     }

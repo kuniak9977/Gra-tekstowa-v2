@@ -2,21 +2,22 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Gra_tekstowa_v2
 {
-    public class Projectile// : IEquatable<Projectile>
+    public class Projectile : Logic
     {
         //public Position pos;
         int id;
-        double X, Y;
-        int roundedX, roundedY;
+        public double X, Y;
+        public int roundedX, roundedY;
         char shoot = '*';
         public double speed;
         public int damage;
-        string direction;
+        public string direction;
         private HashSet<int> usedIds = new HashSet<int>();
         private Queue<int> recycledIds = new Queue<int>();
 
@@ -63,43 +64,20 @@ namespace Gra_tekstowa_v2
             Console.SetCursorPosition(roundedX, roundedY);
             Console.Write(shoot);
         }
-        
-        public bool ColisionWithWall(Rooms pokoj)
+
+        public bool ColisionWithEnemy(Rooms pokoj)
         {
             Rooms rooms = pokoj;
             char[,] znaki = rooms.rooms[0];
             char znak = znaki[roundedY, roundedX];
-            
+
             if (znak == '█')
                 return true;
             return false;
         }
-        public void Update()
-        {
-            
-            switch (direction)
-            {
-                case "east":
-                    roundedX = (int)Math.Round(X += speed);
-                    roundedY = (int)Math.Round(Y);
-                    break;
-                case "west":
-                    roundedX = (int)Math.Round(X -= speed);
-                    roundedY = (int)Math.Round(Y);
-                    break;
-                case "north":
-                    roundedX = (int)Math.Round(X);
-                    roundedY = (int)Math.Round(Y -= speed);
-                    break;
-                case "south":
-                    roundedX = (int)Math.Round(X);
-                    roundedY = (int)Math.Round(Y += speed);
-                    break;
-            }
-            
-        }
+
     }
-    public class Entity
+    public class Entity : Logic
     {
         public double HealthPoints;
         public int armor;
@@ -108,14 +86,21 @@ namespace Gra_tekstowa_v2
     {
         public int exp;
         public int lvl;
-        public Position pos;
+        //public Position pos;
         char head = 'Q';
         char body = 'X';
         public string lookingdirection;
+        public double X, Y;
+        public int roundedX, roundedY;
+        public double speed = 1;
 
         public Player()
         {
-            this.pos = new Position(10, 10);
+            //this.pos = new Position(10, 10);
+            this.X = 10;
+            this.Y = 10;
+            this.roundedX = 10;
+            this.roundedY = 10;
             this.exp = 0;
             this.lvl = 0;
             this.HealthPoints = 3;
@@ -124,21 +109,10 @@ namespace Gra_tekstowa_v2
 
         public void DrawPlayer()
         {
-            Console.SetCursorPosition(pos.x, pos.y);
+            Console.SetCursorPosition(roundedX, roundedY);
             Console.Write(body);
-            Console.SetCursorPosition(pos.x, pos.y - 1);
+            Console.SetCursorPosition(roundedX, roundedY - 1);
             Console.Write(head);
-        }
-    }
-    public class Position
-    {
-        public int x;
-        public int y;
-
-        public Position(int x, int y)
-        {
-            this.x = x;
-            this.y = y;
         }
     }
 }
