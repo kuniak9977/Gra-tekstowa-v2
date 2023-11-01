@@ -11,52 +11,40 @@ namespace Gra_tekstowa_v2
     public class Projectile : Logic
     {
         //public Position pos;
-        int id;
+        string source;
         public double X, Y;
         public int roundedX, roundedY;
         char shoot = '*';
         public double speed;
         public int damage;
         public string direction;
-        private HashSet<int> usedIds = new HashSet<int>();
-        private Queue<int> recycledIds = new Queue<int>();
 
-        public int GetUniqueId()
-        {
-            if (recycledIds.Count > 0)
-            {
-                int recycledId = recycledIds.Dequeue();
-                usedIds.Add(recycledId);
-                return recycledId;
-            }
-            else
-            {
-                int newId = usedIds.Count + 1;
-                usedIds.Add(newId);
-                return newId;
-            }
-        }
-        public void RecycleId(int id)
-        {
-            if (usedIds.Contains(id))
-            {
-                usedIds.Remove(id);
-                recycledIds.Enqueue(id);
-            }
-            else
-            {
-                throw new InvalidOperationException("Trying to recycle an ID that is not in use.");
-            }
-        }
 
-        public Projectile(int x, int y, string direction)
+        public Projectile(int x, int y, string direction, string source)
         {
-            this.X = x;
-            this.Y = y;
+            this.source = source;
             this.speed = 1;
             this.damage = 1;
             this.direction = direction;
-            this.id = GetUniqueId();
+            switch (direction)
+            {
+                case "south":
+                    this.X = x;
+                    this.Y = y;
+                    break;
+                case "north":
+                    this.X = x;
+                    this.Y = y;
+                    break;
+                case "west":
+                    this.X = x;
+                    this.Y = y;
+                    break;
+                case "east":
+                    this.X = x;
+                    this.Y = y;
+                    break;
+            }
         }
 
         public void DrawProjectile()
@@ -65,14 +53,16 @@ namespace Gra_tekstowa_v2
             Console.Write(shoot);
         }
 
-        public bool ColisionWithEnemy(Rooms pokoj)
+        public bool ColisionWithEntity(List<Entity> lista)
         {
-            Rooms rooms = pokoj;
-            char[,] znaki = rooms.rooms[0];
-            char znak = znaki[roundedY, roundedX];
-
-            if (znak == '█')
-                return true;
+            foreach (var entity in lista)
+            {
+                if ((this.roundedX == entity.roundedX) && (this.roundedY == entity.roundedY))
+                {
+                    entity.HealthPoints -= 1;
+                    return true;
+                }
+            }
             return false;
         }
 
@@ -80,39 +70,94 @@ namespace Gra_tekstowa_v2
     public class Entity : Logic
     {
         public double HealthPoints;
-        public int armor;
-    }
-    public class Player : Entity
-    {
-        public int exp;
-        public int lvl;
-        //public Position pos;
-        char head = 'Q';
-        char body = 'X';
-        public string lookingdirection;
+        char symbol = 'E';
         public double X, Y;
         public int roundedX, roundedY;
         public double speed = 1;
+        private string difficulty;
+        public Entity() { }
 
-        public Player()
+        public Entity(string difficulty, int X, int Y)
         {
-            //this.pos = new Position(10, 10);
-            this.X = 10;
-            this.Y = 10;
-            this.roundedX = 10;
-            this.roundedY = 10;
-            this.exp = 0;
-            this.lvl = 0;
-            this.HealthPoints = 3;
-            this.lookingdirection = "east";
+            this.difficulty = difficulty;
+            this.X = X; this.Y = Y;
+            this.roundedX = X; this.roundedY = Y;
+            switch (difficulty)
+            {
+                case "easy":
+                    this.HealthPoints = 2;
+                    break;
+                case "medium":
+                    this.HealthPoints = 4;
+                    break;
+                case "hard":
+                    this.HealthPoints = 8;
+                    break;
+            }
         }
-
-        public void DrawPlayer()
+        public void DrawEntity()
         {
             Console.SetCursorPosition(roundedX, roundedY);
-            Console.Write(body);
-            Console.SetCursorPosition(roundedX, roundedY - 1);
-            Console.Write(head);
+            switch (difficulty)
+            {
+                case "easy":
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    break;
+                case "medium":
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    break;
+                case "hard":
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    break;
+            }
+            Console.Write(symbol);
+            Console.ResetColor();
+        }
+
+        public bool ColisionWithPorojectile(Projectile projectile)
+        {
+            return (projectile.roundedX == this.roundedX) && (projectile.roundedY == this.roundedY);
+        }
+
+        public bool CheckHealth()
+        {
+            if (this.HealthPoints <= 0)
+                return true;
+            return false;
+        }
+
+
+        public class Player : Entity
+        {
+            public int exp;
+            public int lvl;
+            char head = 'Q';
+            char body = 'X';
+            public string lookingdirection;
+            //public double X, Y;
+            //public int roundedX, roundedY;
+            //public double speed = 1;
+
+            public Player() : base ()
+            {
+                //this.pos = new Position(10, 10);
+                this.X = 10;
+                this.Y = 10;
+                this.roundedX = 10;
+                this.roundedY = 10;
+                this.exp = 0;
+                this.lvl = 0;
+                this.HealthPoints = 3;
+                this.lookingdirection = "east";
+            }
+
+            public void DrawPlayer()
+            {
+                Console.SetCursorPosition(roundedX, roundedY);
+                Console.Write(body);
+                Console.SetCursorPosition(roundedX, roundedY - 1);
+                Console.Write(head);
+            }
         }
     }
 }

@@ -16,9 +16,12 @@ namespace Gra_tekstowa_v2
             {
                 temporary = (Projectile)obj;
             }
-            else if (type == typeof(Player))
+            else if (type == typeof(Entity.Player))
             {
-                temporary = (Player)obj;
+                temporary = (Entity.Player)obj;
+            } else
+            {
+                temporary = (Entity)obj;
             }
         }
         public void Update()
@@ -57,7 +60,7 @@ namespace Gra_tekstowa_v2
             char LastChar = znaki[temporary.roundedY, temporary.roundedX];
             Console.SetCursorPosition(lastX, lastY);
             Console.Write(LastChar);
-            if (temporary is Player)
+            if (temporary is Entity.Player)
             {
                 LastChar = znaki[temporary.roundedY - 1, temporary.roundedX];
                 Console.SetCursorPosition(lastX, lastY - 1);
@@ -74,5 +77,7 @@ namespace Gra_tekstowa_v2
             char znak = znaki[temporary.roundedY, temporary.roundedX];
             return znak == '█';
         }
+
+
     }
 }
