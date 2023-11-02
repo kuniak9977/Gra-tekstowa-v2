@@ -1,28 +1,34 @@
 ﻿using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using static Gra_tekstowa_v2.Entity;
 
 namespace Gra_tekstowa_v2
 {
     internal class Program
     {
-        private static object playerLock = new object();
-        private static object roomLock = new object();
         static void Main(string[] args)
         {
 
             Render render = new Render();
-            Entity.Player player = new Entity.Player();
+            Entity.Player player = new Player();
             List<Projectile> bullets = new List<Projectile>();
             List<Entity> entities = new List<Entity>();
             Random rnd = new Random();
+
+            StringBuilder sb = new StringBuilder();
+            render.DrawRoom();
+            sb = render.GetStringBuilder();
+            
+            char[] chars = sb.ToString().ToCharArray();
+
             GenerateEntities();
+
+            string difficulty = "easy";
 
             ConsoleKeyInfo cki;
             ConsoleKey keyPressed;
             Console.CursorVisible = false;
-
-        
 
 
             Thread screeThread = new Thread(ScreenRefresh);
@@ -30,22 +36,113 @@ namespace Gra_tekstowa_v2
             screeThread.Start();
             playerThread.Start();
 
+
+            void ScreenRefresh()
+            {
+                while (true)
+                {
+                    Console.SetCursorPosition(0, 0);
+                    ShowLvlAndHP();
+                    ClearPlayerPosiotion();
+                    SetPlayerPosiotion();
+
+                    //string String = sb.ToString();
+                    //for (int i = 0; i < String.Length; i++)
+                    //{
+                    //    if (String[i] == 'E')
+                    //        switch (difficulty)
+                    //        {
+                    //            case "easy":
+                    //                Console.ForegroundColor = ConsoleColor.Green;
+                    //                break;
+                    //            case "medium":
+                    //                Console.ForegroundColor = ConsoleColor.Yellow;
+                    //                break;
+                    //            case "hard":
+                    //                Console.ForegroundColor = ConsoleColor.Red;
+                    //                break;
+                    //        }
+                    //    Console.Write(String[i]);
+                    //    Console.ResetColor();
+                    //}
+                    ProjectileRefresh();
+                    UpdateEntities();
+                    CheckPlayer();
+                    Console.Write(sb);
+                    Thread.Sleep(17);
+                }
+            }
+
+            void SetPlayerPosiotion()
+            {
+                int coord = player.roundedY * 64 + player.roundedX;
+                char[] znaki = sb.ToString().ToCharArray();
+                char lastchar = znaki[coord];
+                sb.Replace(lastchar, 'X', coord, 1);
+                sb.Replace(lastchar, 'Q', coord - 64, 1);
+            }
+
+            void ClearPlayerPosiotion()
+            {
+                sb.Replace('Q',' ');
+                sb.Replace('X',' ');
+                //int coord = player.roundedY * 64 + player.roundedX;
+                //char[] znaki = sb.ToString().ToCharArray();
+                //char lastchar = znaki[coord];
+                //sb.Replace();
+            }
+
+            void ShowLvlAndHP()
+            {
+                int zmienna = 1 * 64 + 1;
+                sb.Remove(zmienna,55);
+                string String1 = $"Poziom gracza: {player.lvl}                          Liczba żyć: {player.HealthPoints}";
+                sb.Insert(zmienna, String1);
+            }
+
+            void ProjectileRefresh()
+            {
+                for (int i = 0; i < bullets.Count; i++)
+                {
+                    Projectile p = bullets[i];
+                    int coord = p.roundedY * 64 + p.roundedX;
+                    sb.Replace('*', ' ', coord, 1);
+
+                    p.Update();
+
+
+                    if (p.ColisionWithWall(render.rooms) || p.ColisionWithEntity(entities))
+                    {
+                        bullets.Remove(p);
+                        i--;
+                    }
+                    else
+                    {
+                        coord = p.roundedY * 64 + p.roundedX;
+                        sb.Replace(' ', '*', coord, 1);
+                    }
+                        
+                }
+            }
+
             void GenerateEntities()
             {
-                
-                int EntityCount = rnd.Next(2,10);
+
+                int EntityCount = rnd.Next(2, 15);
                 for (int i = 0; i < EntityCount; i++)
                 {
-                    int X = rnd.Next(2,61);
-                    int Y = rnd.Next(5,26);
-                    Entity entity = new Entity("hard",X,Y);
+                    int X = rnd.Next(2, 61);
+                    int Y = rnd.Next(5, 26);
+                    Entity entity = new Entity("easy", X, Y);
                     entities.Add(entity);
                 }
                 foreach (Entity entity in entities)
                 {
-                    entity.DrawEntity();
+                    int coord = entity.roundedY * 64 + entity.roundedX;
+                    sb.Replace(chars[coord], entity.symbol, coord, 1);
                 }
             }
+
 
             void UpdateEntities()
             {
@@ -54,62 +151,35 @@ namespace Gra_tekstowa_v2
                 for (int i = 0; i < entities.Count; i++)
                 {
                     Entity entity = entities[i];
-                    if (entity.CheckHealth())
+                    if (entity.ZeroHealth())
                     {
                         entities.Remove(entity);
-                        entity.ClearLastPosition(render.rooms);
+                        int coord = entity.roundedY * 64 + entity.roundedX;
+                        sb.Replace('E', ' ', coord, 1);
+                        player.exp += 10;
                         i--;
                     }
-                    //if ((player.roundedX == entity.roundedX) || player.roundedY == entity.roundedY)
-                }
-            }
-
-
-            void ScreenRefresh()
-            {
-                int frame = 0;
-                render.DrawRoom();
-                player.DrawPlayer();
-                GenerateEntities();
-                while (true)
-                {
-                    //render.DrawRoom();
-                    //player.ClearLastPosition(render.rooms);
-                    ProjectileRefresh();
-                    EntitiesRefesh();
-                    Thread.Sleep(32);
-                    //if (frame++ == 60)
-                    //{
-                    //    frame = 0;
-                    //    render.DrawRoom();
-                    //}
-                }
-            }
-
-            void ProjectileRefresh()
-            {
-                for (int i = 0; i < bullets.Count; i++)
-                {
-                    Projectile p = bullets[i];
-                    p.ClearLastPosition(render.rooms);
-                    p.Update();
-                    if (p.ColisionWithWall(render.rooms) || p.ColisionWithEntity(entities))
+                    if ((player.roundedX == entity.roundedX) || player.roundedY == entity.roundedY)
                     {
-                        bullets.Remove(p);
-                        i--;
+                        //if (RandomNumber < 21)
+                        //{
+                        //    Projectile bullet = new Projectile(entity.roundedX, entity.roundedY, entity.lookingdirection, "entity");
+                        //    bullets.Add(bullet);
+                        //}
                     }
-                    else
-                        p.DrawProjectile();
                 }
             }
 
-            void EntitiesRefesh()
-            {
-                UpdateEntities();
-                foreach (Entity entity in entities)
+            void CheckPlayer()
+             {
+                if (player.exp >= 50)
                 {
-                    //entity.DrawEntity();
+                    player.lvl += 1;
+                    player.exp = 0;
+                    player.HealthPoints += 1;
                 }
+                if (player.HealthPoints == 0)
+                    Environment.Exit(0);
             }
 
             void PlayerAction()
@@ -118,47 +188,36 @@ namespace Gra_tekstowa_v2
                 {
                     cki = Console.ReadKey(true);
                     keyPressed = cki.Key;
-                    player.ClearLastPosition(render.rooms);
-                    //player.DrawPlayer();
 
                     switch (keyPressed)
                     {
                         case ConsoleKey.A:
-                            //player.X -= 1;
                             player.roundedX = (int)Math.Round(player.X -= player.speed);
                             player.roundedY = (int)Math.Round(player.Y);
                             player.lookingdirection = "west";
                             if (player.ColisionWithWall(render.rooms)) { player.X += 1; player.roundedX += 1; }
-                            player.DrawPlayer();
                             break;
                         case ConsoleKey.W:
-                            //player.Y -= 1;
                             player.roundedX = (int)Math.Round(player.X);
                             player.roundedY = (int)Math.Round(player.Y -= player.speed);
                             player.lookingdirection = "north";
                             if (player.ColisionWithWall(render.rooms)) { player.Y += 1; player.roundedY += 1; }
-                            player.DrawPlayer();
                             break;
                         case ConsoleKey.S:
-                            //player.Y += 1;
                             player.roundedX = (int)Math.Round(player.X);
                             player.roundedY = (int)Math.Round(player.Y += player.speed);
                             player.lookingdirection = "south";
                             if (player.ColisionWithWall(render.rooms)) { player.Y -= 1; player.roundedY -= 1; }
-                            player.DrawPlayer();
                             break;
                         case ConsoleKey.D:
-                            //player.X += 1;
                             player.roundedX = (int)Math.Round(player.X += player.speed);
                             player.roundedY = (int)Math.Round(player.Y);
                             player.lookingdirection = "east";
                             if (player.ColisionWithWall(render.rooms)) { player.X -= 1; player.roundedX -= 1; }
-                            player.DrawPlayer();
                             break;
                         case ConsoleKey.Spacebar:
                             Projectile bullet = new Projectile(player.roundedX, player.roundedY, player.lookingdirection, "player");
                             bullets.Add(bullet);
-                            player.DrawPlayer();
                             break;
                     }
                     Thread.Sleep(32);

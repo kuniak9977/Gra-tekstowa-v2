@@ -70,11 +70,12 @@ namespace Gra_tekstowa_v2
     public class Entity : Logic
     {
         public double HealthPoints;
-        char symbol = 'E';
+        public char symbol = 'E';
         public double X, Y;
         public int roundedX, roundedY;
-        public double speed = 1;
+        public double speed = 0.5;
         private string difficulty;
+        public string lookingdirection;
         public Entity() { }
 
         public Entity(string difficulty, int X, int Y)
@@ -119,7 +120,7 @@ namespace Gra_tekstowa_v2
             return (projectile.roundedX == this.roundedX) && (projectile.roundedY == this.roundedY);
         }
 
-        public bool CheckHealth()
+        public bool ZeroHealth()
         {
             if (this.HealthPoints <= 0)
                 return true;
@@ -133,7 +134,7 @@ namespace Gra_tekstowa_v2
             public int lvl;
             char head = 'Q';
             char body = 'X';
-            public string lookingdirection;
+            
             //public double X, Y;
             //public int roundedX, roundedY;
             //public double speed = 1;
@@ -141,6 +142,7 @@ namespace Gra_tekstowa_v2
             public Player() : base ()
             {
                 //this.pos = new Position(10, 10);
+                this.speed = 1;
                 this.X = 10;
                 this.Y = 10;
                 this.roundedX = 10;

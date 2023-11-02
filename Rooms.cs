@@ -8,13 +8,12 @@ namespace Gra_tekstowa_v2
 {
     public class Rooms
     {
-        StreamReader sr = new StreamReader("rooms.txt");
-        StringBuilder sb = new StringBuilder();
+        //StreamReader sr = new StreamReader("rooms.txt");
+        //StringBuilder sb = new StringBuilder();
         public List<char[,]> rooms = new List<char[,]>();
 
         public Rooms()
         {
-
             string[] lines = File.ReadAllLines("rooms.txt");
             int numRows = lines.Length;
             int numCol = lines[0].Length;

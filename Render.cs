@@ -12,6 +12,8 @@ namespace Gra_tekstowa_v2
         public int height;
         public Rooms rooms;
 
+        public StringBuilder stringbuilder = new StringBuilder();
+
         public Render()
         {
             width = 64;
@@ -34,9 +36,17 @@ namespace Gra_tekstowa_v2
             {
                 for (int j = 0; j < numCol; j++)
                 {
-                    Console.Write(roomschar[i, j]);
+                    stringbuilder.Append(roomschar[i,j]);
+                    //Console.Write(roomschar[i, j]);
+
                 }
             }
+            //Console.Write(stringbuilder.ToString());
+        }
+
+        public StringBuilder GetStringBuilder()
+        {
+            return stringbuilder;
         }
     }
 }
