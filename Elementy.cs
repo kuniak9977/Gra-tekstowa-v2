@@ -10,7 +10,6 @@ namespace Gra_tekstowa_v2
 {
     public class Projectile : Logic
     {
-        //public Position pos;
         string source;
         public double X, Y;
         public int roundedX, roundedY;
@@ -26,38 +25,20 @@ namespace Gra_tekstowa_v2
             this.speed = 1;
             this.damage = 1;
             this.direction = direction;
-            switch (direction)
-            {
-                case "south":
-                    this.X = x;
-                    this.Y = y;
-                    break;
-                case "north":
-                    this.X = x;
-                    this.Y = y;
-                    break;
-                case "west":
-                    this.X = x;
-                    this.Y = y;
-                    break;
-                case "east":
-                    this.X = x;
-                    this.Y = y;
-                    break;
-            }
+            this.X = x;
+            this.Y = y;
         }
 
-        public void DrawProjectile()
+        public bool ColisonWithPlayer(Entity.Player player)
         {
-            Console.SetCursorPosition(roundedX, roundedY);
-            Console.Write(shoot);
+            return (player.roundedX == this.roundedX) && (player.roundedY == this.roundedY) && (this.source == "entity");
         }
 
         public bool ColisionWithEntity(List<Entity> lista)
         {
             foreach (var entity in lista)
             {
-                if ((this.roundedX == entity.roundedX) && (this.roundedY == entity.roundedY))
+                if ((this.roundedX == entity.roundedX) && (this.roundedY == entity.roundedY) && (this.source == "player"))
                 {
                     entity.HealthPoints -= 1;
                     return true;
@@ -65,8 +46,8 @@ namespace Gra_tekstowa_v2
             }
             return false;
         }
-
     }
+
     public class Entity : Logic
     {
         public double HealthPoints;
@@ -76,6 +57,7 @@ namespace Gra_tekstowa_v2
         public double speed = 0.5;
         private string difficulty;
         public string lookingdirection;
+
         public Entity() { }
 
         public Entity(string difficulty, int X, int Y)
@@ -96,29 +78,6 @@ namespace Gra_tekstowa_v2
                     break;
             }
         }
-        public void DrawEntity()
-        {
-            Console.SetCursorPosition(roundedX, roundedY);
-            switch (difficulty)
-            {
-                case "easy":
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    break;
-                case "medium":
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    break;
-                case "hard":
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    break;
-            }
-            Console.Write(symbol);
-            Console.ResetColor();
-        }
-
-        public bool ColisionWithPorojectile(Projectile projectile)
-        {
-            return (projectile.roundedX == this.roundedX) && (projectile.roundedY == this.roundedY);
-        }
 
         public bool ZeroHealth()
         {
@@ -127,21 +86,15 @@ namespace Gra_tekstowa_v2
             return false;
         }
 
-
         public class Player : Entity
         {
             public int exp;
             public int lvl;
             char head = 'Q';
             char body = 'X';
-            
-            //public double X, Y;
-            //public int roundedX, roundedY;
-            //public double speed = 1;
 
             public Player() : base ()
             {
-                //this.pos = new Position(10, 10);
                 this.speed = 1;
                 this.X = 10;
                 this.Y = 10;
@@ -151,14 +104,6 @@ namespace Gra_tekstowa_v2
                 this.lvl = 0;
                 this.HealthPoints = 3;
                 this.lookingdirection = "east";
-            }
-
-            public void DrawPlayer()
-            {
-                Console.SetCursorPosition(roundedX, roundedY);
-                Console.Write(body);
-                Console.SetCursorPosition(roundedX, roundedY - 1);
-                Console.Write(head);
             }
         }
     }

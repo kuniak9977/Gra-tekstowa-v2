@@ -9,7 +9,6 @@ namespace Gra_tekstowa_v2
     {
         static void Main(string[] args)
         {
-
             Render render = new Render();
             Entity.Player player = new Player();
             List<Projectile> bullets = new List<Projectile>();
@@ -31,10 +30,12 @@ namespace Gra_tekstowa_v2
             Console.CursorVisible = false;
 
 
-            Thread screeThread = new Thread(ScreenRefresh);
-            Thread playerThread = new Thread(PlayerAction);
-            screeThread.Start();
-            playerThread.Start();
+            Thread ScreeThread = new Thread(ScreenRefresh);
+            Thread PlayerThread = new Thread(PlayerAction);
+            Thread EntityShootThread = new Thread(EntityShooting);
+            ScreeThread.Start();
+            PlayerThread.Start();
+            EntityShootThread.Start();
 
 
             void ScreenRefresh()
@@ -86,10 +87,6 @@ namespace Gra_tekstowa_v2
             {
                 sb.Replace('Q',' ');
                 sb.Replace('X',' ');
-                //int coord = player.roundedY * 64 + player.roundedX;
-                //char[] znaki = sb.ToString().ToCharArray();
-                //char lastchar = znaki[coord];
-                //sb.Replace();
             }
 
             void ShowLvlAndHP()
@@ -109,9 +106,13 @@ namespace Gra_tekstowa_v2
                     sb.Replace('*', ' ', coord, 1);
 
                     p.Update();
-
-
-                    if (p.ColisionWithWall(render.rooms) || p.ColisionWithEntity(entities))
+                    if (p.ColisonWithPlayer(player))
+                    {
+                        bullets.Remove(p);
+                        i--;
+                        player.HealthPoints -= 1;
+                    }
+                    else if (p.ColisionWithWall(render.rooms) || p.ColisionWithEntity(entities))
                     {
                         bullets.Remove(p);
                         i--;
@@ -159,15 +160,42 @@ namespace Gra_tekstowa_v2
                         player.exp += 10;
                         i--;
                     }
-                    if ((player.roundedX == entity.roundedX) || player.roundedY == entity.roundedY)
+                    if (player.roundedX == entity.roundedX)
                     {
-                        //if (RandomNumber < 21)
-                        //{
-                        //    Projectile bullet = new Projectile(entity.roundedX, entity.roundedY, entity.lookingdirection, "entity");
-                        //    bullets.Add(bullet);
-                        //}
+                        if (player.roundedY >= entity.roundedY)
+                            entity.lookingdirection = "south";
+                        else
+                            entity.lookingdirection = "north";
+                    }
+                    if (player.roundedY == entity.roundedY)
+                    {
+                        if (player.roundedX >= entity.roundedX)
+                            entity.lookingdirection = "east";
+                        else
+                            entity.lookingdirection = "west";
                     }
                 }
+            }
+
+            void EntityShooting()
+            {
+                while (true)
+                {
+                    foreach (Entity entity in entities)
+                    {
+                        if (SameLine(entity))
+                        {
+                            Projectile bullet = new Projectile(entity.roundedX, entity.roundedY, entity.lookingdirection, "entity");
+                            bullets.Add(bullet);
+                        }
+                    }
+                    Thread.Sleep(500);
+                }
+            }
+
+            bool SameLine(Entity entity)
+            {
+                return (player.roundedX == entity.roundedX) || (player.roundedY == entity.roundedY);
             }
 
             void CheckPlayer()
