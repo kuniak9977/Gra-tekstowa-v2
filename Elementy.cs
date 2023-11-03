@@ -90,8 +90,6 @@ namespace Gra_tekstowa_v2
         {
             public int exp;
             public int lvl;
-            char head = 'Q';
-            char body = 'X';
 
             public Player() : base ()
             {

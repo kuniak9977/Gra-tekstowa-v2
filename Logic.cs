@@ -51,24 +51,6 @@ namespace Gra_tekstowa_v2
             }
         }
 
-        public void ClearLastPosition(Rooms pokoj)
-        {
-            GetTypeOfObject(this);
-            int lastX = temporary.roundedX;
-            int lastY = temporary.roundedY;
-            char[,] znaki = pokoj.rooms[0];
-            char LastChar = znaki[temporary.roundedY, temporary.roundedX];
-            Console.SetCursorPosition(lastX, lastY);
-            Console.Write(LastChar);
-            if (temporary is Entity.Player)
-            {
-                LastChar = znaki[temporary.roundedY - 1, temporary.roundedX];
-                Console.SetCursorPosition(lastX, lastY - 1);
-                Console.Write(LastChar);
-            }
-
-        }
-
         public bool ColisionWithWall(Rooms pokoj)
         {
             GetTypeOfObject (this);

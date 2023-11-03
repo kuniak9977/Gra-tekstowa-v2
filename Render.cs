@@ -25,7 +25,7 @@ namespace Gra_tekstowa_v2
             this.rooms = new Rooms();
         }
 
-        public void DrawRoom()
+        public void LoadRoom()
         {
             Console.Clear();
             Console.SetCursorPosition(0, 0);
@@ -37,11 +37,8 @@ namespace Gra_tekstowa_v2
                 for (int j = 0; j < numCol; j++)
                 {
                     stringbuilder.Append(roomschar[i,j]);
-                    //Console.Write(roomschar[i, j]);
-
                 }
             }
-            //Console.Write(stringbuilder.ToString());
         }
 
         public StringBuilder GetStringBuilder()
