@@ -13,7 +13,6 @@ namespace Gra_tekstowa_v2
         string source;
         public double X, Y;
         public int roundedX, roundedY;
-        char shoot = '*';
         public double speed;
         public int damage;
         public string direction;

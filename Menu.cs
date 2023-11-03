@@ -59,13 +59,13 @@ namespace Gra_tekstowa_v2
                 ConsoleKeyInfo CKI = Console.ReadKey(true);
                 CK = CKI.Key;
 
-                if (CK == ConsoleKey.UpArrow)
+                if (CK == ConsoleKey.W)
                 {
                     WybranaOpcja--;
                     if (WybranaOpcja < 0)
                         WybranaOpcja = Opcje.Length - 1;
                 }
-                if (CK == ConsoleKey.DownArrow)
+                if (CK == ConsoleKey.S)
                 {
                     WybranaOpcja++;
                     if (WybranaOpcja == Opcje.Length)

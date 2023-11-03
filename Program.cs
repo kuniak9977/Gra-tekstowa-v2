@@ -14,15 +14,10 @@ namespace Gra_tekstowa_v2
             mechanics.RunMainMenu();
             
 
-            Font.UstawCzcionke(20,32);
+            //Font.UstawCzcionke(20,32);
 
             
-            Thread ScreeThread = new Thread(mechanics.ScreenRefresh);
-            Thread PlayerThread = new Thread(mechanics.PlayerAction);
-            Thread EntityShootThread = new Thread(mechanics.EntityShooting);
-            ScreeThread.Start();
-            PlayerThread.Start();
-            EntityShootThread.Start();
+            
 
         }
     }
