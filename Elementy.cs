@@ -13,7 +13,6 @@ namespace Gra_tekstowa_v2
         string source;
         public double X, Y;
         public int roundedX, roundedY;
-        char shoot = '*';
         public double speed;
         public int damage;
         public string direction;
@@ -103,6 +102,21 @@ namespace Gra_tekstowa_v2
                 this.HealthPoints = 3;
                 this.lookingdirection = "east";
             }
+
+            public bool ColisionWithEntity (List<Entity> lista)
+            {
+                foreach (Entity e in lista)
+                {
+                    if (e.roundedY == this.roundedY && e.roundedX == this.roundedX)
+                    {
+                        //this.HealthPoints--;
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+
         }
     }
 }

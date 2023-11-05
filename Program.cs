@@ -9,21 +9,38 @@ namespace Gra_tekstowa_v2
     {
         static void Main(string[] args)
         {
+            Console.CursorVisible = false;
             Mechanics mechanics = new Mechanics();
             Console.Title = "MazeRunner Escape!";
+            Font.UstawCzcionke(8, 16);
+            MenuMain:
             mechanics.RunMainMenu();
-            
+            AplicationRunning:
+            while (!mechanics.isPaused)
+            {
+                if (mechanics.exitGenerated)
+                    goto End;
+                if (mechanics.playerIsDead)
+                    goto DeadScreen;
+            }
+            mechanics.PauseMenu();
+            if (!mechanics.isPaused)
+                goto AplicationRunning;
 
-            Font.UstawCzcionke(20,32);
+            End:
+            mechanics.Stop();
+            Console.Clear();
+            mechanics.ExitMenu();
+            goto MenuMain;
 
-            
-            Thread ScreeThread = new Thread(mechanics.ScreenRefresh);
-            Thread PlayerThread = new Thread(mechanics.PlayerAction);
-            Thread EntityShootThread = new Thread(mechanics.EntityShooting);
-            ScreeThread.Start();
-            PlayerThread.Start();
-            EntityShootThread.Start();
-
+            DeadScreen:
+            mechanics.Stop();
+            Console.Clear();
+            mechanics.DeadMenu();
+            goto MenuMain;
+            //mechanics.Stop();
+            Console.Clear();
+            Console.WriteLine("Po pętli");
         }
     }
 }

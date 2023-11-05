@@ -68,7 +68,7 @@ namespace Gra_tekstowa_v2
                     {
                         info.dwFontSize = new COORD((short)sizeX, (short)sizeY);
                         SetCurrentConsoleFontEx(hnd, false, info);
-                        Console.WriteLine("The console already is using a TrueType font.");
+                        //Console.WriteLine("The console already is using a TrueType font.");
                         return;
                     }
                     // Set console font to Lucida Console.
