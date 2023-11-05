@@ -51,13 +51,20 @@ namespace Gra_tekstowa_v2
             }
         }
 
-        public bool ColisionWithWall(Rooms pokoj)
+        public bool ColisionWithWall(char[,] chars)
         {
             GetTypeOfObject (this);
-            Rooms rooms = pokoj;
-            char[,] znaki = rooms.rooms[0];
+            char[,] znaki = chars;
             char znak = znaki[temporary.roundedY, temporary.roundedX];
             return znak == '█';
+        }
+
+        public bool EnterTheDoor(char[,] chars)
+        {
+            GetTypeOfObject(this);
+            char[,] znaki = chars;
+            char znak = znaki[temporary.roundedY,temporary.roundedX];
+            return znak == '0';
         }
 
 

@@ -6,12 +6,13 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using static Gra_tekstowa_v2.Entity;
+using static Gra_tekstowa_v2.Font;
 
 namespace Gra_tekstowa_v2
 {
     public class Mechanics
     {
-        Render render = new Render();
+        Render render;
         Player player = new Player();
         List<Projectile> bullets = new List<Projectile>();
         List<Entity> entities = new List<Entity>();
@@ -21,8 +22,13 @@ namespace Gra_tekstowa_v2
         
         string difficulty;
         char[] chars;
+        char[,] chars2;
         int entityshootspeed;
-        volatile bool isPaused = false;
+        int maxEntity, minEntity;
+        int playerlocation = 0;
+        public volatile bool isPaused = false;
+        bool RoomsAreClear = false;
+        bool RoomIsClear = false;
 
         ConsoleKeyInfo cki;
         ConsoleKey keyPressed;
@@ -37,10 +43,9 @@ namespace Gra_tekstowa_v2
 
         void Play()
         {
-            Console.CursorVisible = false;
-            render.LoadRoom();
-            sb = render.GetStringBuilder();
-            chars = sb.ToString().ToCharArray();
+            render = new Render(difficulty);
+            LoadRoom(playerlocation);
+            
             GenerateEntities();
             ScreeThread = new Thread(ScreenRefresh);
             PlayerThread = new Thread(PlayerAction);
@@ -50,29 +55,42 @@ namespace Gra_tekstowa_v2
             EntityShootThread.Start();
         }
 
-        void Pause()
+        void RunNextRoom()
         {
-            isPaused = true;
-            Stop();
+            LoadRoom(playerlocation);
+            GenerateEntities();
         }
 
-        void Resume()
+        void LoadRoom(int location)
+        {
+            
+            int rows = 27;
+            int col = 64;
+            chars = new char[rows * col];
+            int cursor = 0;
+            char[,] thing = render.map.RoomList[location].roomchar;
+            chars2 = render.map.RoomList[location].roomchar;
+            for (int i = 0; i < rows; i++)
+            {
+                for (int j = 0; j < col; j++)
+                {
+                    chars[cursor++] = thing[i,j];
+                }
+            }
+            render.LoadRoom(location);
+            sb = render.GetStringBuilder();
+        }
+
+
+        public void Resume()
         {
             isPaused = false;
-            ScreeThread = new Thread(ScreenRefresh);
-            PlayerThread = new Thread(PlayerAction);
-            EntityShootThread = new Thread(EntityShooting);
-            ScreeThread.Start();
-            PlayerThread.Start();
-            EntityShootThread.Start();
         }
 
 
-        void Stop()
+        public void Stop()
         {
-            EntityShootThread.Join();
-            PlayerThread.Join();
-            ScreeThread.Join();
+            isPaused = true;
         }
 
         public void ScreenRefresh()
@@ -82,23 +100,129 @@ namespace Gra_tekstowa_v2
                 if (!isPaused)
                 {
                     Console.SetCursorPosition(0, 0);
+                    EnterToNeighbourRoom();
                     ShowLvlAndHP();
                     ClearPlayerPosiotion();
-                    SetPlayerPosiotion();
+                    //SetPlayerPosiotion();
                     ProjectileRefresh();
                     UpdateEntities();
                     CheckPlayer();
+                    SetPlayerPosiotion();
+                    OpenDoor();
                     Console.Write(sb);
                 }
-                Thread.Sleep(17);
+                Thread.Sleep(32);
+            }
+        }
+
+        bool CheckRoomStatus()
+        {
+            if (entities.Count == 0)
+                if (RoomIsClear == false)
+                {
+                    render.map.RoomList[playerlocation].RoomIsClear = true;
+                    return true;
+                }
+            return false;
+                
+        }
+
+        void OpenDoor()
+        {
+            
+            if (CheckRoomStatus() && RoomIsClear)
+            {
+                
+                char[] tab = render.map.RoomList[playerlocation].direction;
+                int coord;
+                for (int i = 0; i < tab.Length; i++)
+                {
+                    char c = tab[i];
+                    if (c != ' ')
+                        switch (i)
+                        {
+                            case 0:
+                                coord = 3 * 64 + 30;
+                                sb.Replace('█', '0', coord, 4);
+                                for (int j = 30; j <= 34; j++)
+                                    chars2[3, j] = '0';
+                                break;
+                            case 1:
+                                coord = 26 * 64 + 30;
+                                sb.Replace('█', '0', coord, 4);
+                                for (int j = 30; j <= 34; j++)
+                                    chars2[26, j] = '0';
+                                break;
+                            case 2:
+                                for (int j = 13; j <= 16; j++)
+                                {
+                                    coord = j * 64 + 63;
+                                    sb.Replace('█', '0', coord, 1);
+                                    chars2[j, 63] = '0';
+                                }
+                                break;
+                            case 3:
+                                for (int j = 13; j <= 16; j++)
+                                {
+                                    coord = j * 64 + 0;
+                                    sb.Replace('█', '0', coord, 1);
+                                    chars2[j, 0] = '0';
+                                }
+                                break;
+                        }
+                }
+                
+            }
+        }
+
+        void EnterToNeighbourRoom()
+        {
+            if (player.EnterTheDoor(chars2))
+            {
+                int currentPlayerLocation = playerlocation;
+                switch (player.lookingdirection)
+                {
+                    case "north":
+                        playerlocation = render.map.RoomList[currentPlayerLocation].direction[0];
+                        player.X = 32;
+                        player.Y = 25;
+                        break;
+                    case "south":
+                        playerlocation = render.map.RoomList[currentPlayerLocation].direction[1];
+                        player.X = 32;
+                        player.Y = 5;
+                        break;
+                    case "east":
+                        playerlocation = render.map.RoomList[currentPlayerLocation].direction[2];
+                        player.X = 2;
+                        player.Y = 14;
+                        break;
+                    case "west":
+                        playerlocation = render.map.RoomList[currentPlayerLocation].direction[3];
+                        player.X = 62;
+                        player.Y = 14;
+                        break;
+                }
+                Stop();
+                //LoadRoom(playerlocation);
+                //GenerateEntities();
             }
         }
 
         void SetPlayerPosiotion()
         {
+            bool playerEnemyColision = false;
             int coord = player.roundedY * 64 + player.roundedX;
             char[] znaki = sb.ToString().ToCharArray();
             char lastchar = znaki[coord];
+            //if (!playerEnemyColision && player.ColisionWithEntity(entities))
+            //{
+            //    player.HealthPoints--;
+            //    playerEnemyColision = true;
+            //}
+            ////player.ColisionWithEntity(entities);
+
+            player.ColisionWithEntity(entities);
             sb.Replace(lastchar, 'X', coord, 1);
             sb.Replace(lastchar, 'Q', coord - 64, 1);
         }
@@ -132,7 +256,7 @@ namespace Gra_tekstowa_v2
                     i--;
                     player.HealthPoints -= 1;
                 }
-                else if (p.ColisionWithWall(render.rooms) || p.ColisionWithEntity(entities))
+                else if (p.ColisionWithWall(chars2) || p.ColisionWithEntity(entities))
                 {
                     bullets.Remove(p);
                     i--;
@@ -152,10 +276,15 @@ namespace Gra_tekstowa_v2
             for (int i = 0; i < entities.Count; i++)
             {
                 Entity entity = entities[i];
+                int coord = entity.roundedY * 64 + entity.roundedX;
+                char[] chars = sb.ToString().ToCharArray();
+                if (chars[coord] == ' ' && entities.Contains(entity))
+                    sb.Replace(' ', 'E', coord, 1);
                 if (entity.ZeroHealth())
                 {
                     entities.Remove(entity);
-                    int coord = entity.roundedY * 64 + entity.roundedX;
+                    //int coord = entity.roundedY * 64 + entity.roundedX;
+                    
                     sb.Replace('E', ' ', coord, 1);
                     player.exp += 10;
                     i--;
@@ -178,19 +307,28 @@ namespace Gra_tekstowa_v2
         }
         void GenerateEntities()
         {
-
-            int EntityCount = rnd.Next(2, 15);
-            for (int i = 0; i < EntityCount; i++)
+            if (render.map.RoomList[playerlocation].RoomIsClear == false)
             {
-                int X = rnd.Next(2, 61);
-                int Y = rnd.Next(5, 26);
-                Entity entity = new Entity(difficulty, X, Y);
-                entities.Add(entity);
-            }
-            foreach (Entity entity in entities)
-            {
-                int coord = entity.roundedY * 64 + entity.roundedX;
-                sb.Replace(chars[coord], entity.symbol, coord, 1);
+                int EntityCount = rnd.Next(minEntity, maxEntity);
+                for (int i = 0; i < EntityCount; i++)
+                {
+                spawnAgain:
+                    int X = rnd.Next(2, 61);
+                    int Y = rnd.Next(5, 26);
+                    int coord = (Y * 64) + X;
+                    if (chars[coord] == '+')
+                    {
+                        Entity entity = new Entity(difficulty, X, Y);
+                        entities.Add(entity);
+                    }
+                    else
+                        goto spawnAgain;
+                }
+                foreach (Entity entity in entities)
+                {
+                    int coord = entity.roundedY * 64 + entity.roundedX;
+                    sb.Replace(chars[coord], entity.symbol, coord, 1);
+                }
             }
         }
 
@@ -246,36 +384,37 @@ namespace Gra_tekstowa_v2
                             player.roundedX = (int)Math.Round(player.X -= player.speed);
                             player.roundedY = (int)Math.Round(player.Y);
                             player.lookingdirection = "west";
-                            if (player.ColisionWithWall(render.rooms)) { player.X += 1; player.roundedX += 1; }
+                            if (player.ColisionWithWall(chars2)) { player.X += 1; player.roundedX += 1; }
                             break;
                         case ConsoleKey.W:
                             player.roundedX = (int)Math.Round(player.X);
                             player.roundedY = (int)Math.Round(player.Y -= player.speed);
                             player.lookingdirection = "north";
-                            if (player.ColisionWithWall(render.rooms)) { player.Y += 1; player.roundedY += 1; }
+                            if (player.ColisionWithWall(chars2)) { player.Y += 1; player.roundedY += 1; }
                             break;
                         case ConsoleKey.S:
                             player.roundedX = (int)Math.Round(player.X);
                             player.roundedY = (int)Math.Round(player.Y += player.speed);
                             player.lookingdirection = "south";
-                            if (player.ColisionWithWall(render.rooms)) { player.Y -= 1; player.roundedY -= 1; }
+                            if (player.ColisionWithWall(chars2)) { player.Y -= 1; player.roundedY -= 1; }
                             break;
                         case ConsoleKey.D:
                             player.roundedX = (int)Math.Round(player.X += player.speed);
                             player.roundedY = (int)Math.Round(player.Y);
                             player.lookingdirection = "east";
-                            if (player.ColisionWithWall(render.rooms)) { player.X -= 1; player.roundedX -= 1; }
+                            if (player.ColisionWithWall(chars2)) { player.X -= 1; player.roundedX -= 1; }
                             break;
                         case ConsoleKey.Spacebar:
                             Projectile bullet = new Projectile(player.roundedX, player.roundedY, player.lookingdirection, "player");
                             bullets.Add(bullet);
                             break;
                         case ConsoleKey.Escape:
-                            PauseMenu();
+                            isPaused = true;
                             break;
                     }
                 }
-                
+
+
                 Thread.Sleep(32);
             }
         }
@@ -294,7 +433,10 @@ namespace Gra_tekstowa_v2
             {
                 case 0:
                     DifficultyLevelMenu();
-                    Play();
+                    if (PlayerThread is null)
+                        Play();
+                    else
+                        Resume();
                     break;
                 case 1:
                     AboutMenu();
@@ -318,14 +460,20 @@ namespace Gra_tekstowa_v2
                 case 0:
                     difficulty = "easy";
                     entityshootspeed = 1200;
+                    maxEntity = 10;
+                    minEntity = 4;
                     break;
                 case 1:
                     difficulty = "medium";
                     entityshootspeed = 800;
+                    maxEntity = 15;
+                    minEntity = 8;
                     break;
                 case 2:
                     difficulty = "hard";
                     entityshootspeed = 400;
+                    maxEntity = 20;
+                    minEntity = 12;
                     break;
             }
         }
@@ -388,11 +536,12 @@ namespace Gra_tekstowa_v2
             }
         }
 
-        void PauseMenu()
+        public void PauseMenu()
         {
-            Stop();
+            
             Console.Clear();
-            string Propmt = "PAUZA";
+            Stop();
+            string Propmt = "PAUZA\n";
             string[] strings = { "Wróć do gry", "Powrót do menu", "Wyjdź z gry" };
             Menu PauseMenu = new Menu(strings, Propmt);
             int Choosenoption = PauseMenu.Run();
@@ -400,11 +549,12 @@ namespace Gra_tekstowa_v2
             switch (Choosenoption)
             {
                 case 0:
+                    isPaused = false;
                     Resume();
                     break;
                 case 1:
+                    isPaused = true;
                     RunMainMenu();
-                    Stop();
                     break;
                 case 2:
                     Environment.Exit(0); ;

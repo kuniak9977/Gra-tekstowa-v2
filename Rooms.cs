@@ -8,42 +8,38 @@ namespace Gra_tekstowa_v2
 {
     public class Rooms
     {
-        //StreamReader sr = new StreamReader("rooms.txt");
-        //StringBuilder sb = new StringBuilder();
-        public List<char[,]> rooms = new List<char[,]>();
+        public List<char[,]> room = new List<char[,]>();
 
         public Rooms()
         {
             string[] lines = File.ReadAllLines("rooms.txt");
             int numRows = lines.Length;
             int numCol = lines[0].Length;
-            char[,] roomschars = new char[numRows, numCol];
-
+            char[,] roomschars = new char[27, 64];
+            int index = 0;
             for (int i = 0; i < numRows; i++)
             {
                 char[] chars = lines[i].ToCharArray();
                 for (int j = 0; j < numCol; j++)
                 {
-                    roomschars[i, j] = chars[j];
+                    if (chars[j] == '?')
+                        roomschars[index, j] = ' ';
+                    else if (chars[j] == '=')
+                    {
+                        room.Add(roomschars);
+                        
+                        j = -1;
+                        index = 0;
+                        if (i + 1 == numRows)
+                            break;
+                        roomschars = new char[27, 64];
+                        chars = lines[++i].ToCharArray();
+                    }
+                    else
+                        roomschars[index, j] = chars[j];
                 }
+                index++;
             }
-            rooms.Add(roomschars);
-            /*
-            List<char> chars = new List<char>();
-            while (!sr.EndOfStream)
-            {
-                char znak = (char)sr.Read();
-                if (znak == '\n')
-                    continue;
-                if (znak == '+')
-                {
-                    char[] znakpokoje = chars.ToArray();
-                    rooms.Add(znakpokoje);
-                    chars.Clear();
-                    continue;
-                }
-                chars.Add(znak);
-            }*/
         }
     }
 }
