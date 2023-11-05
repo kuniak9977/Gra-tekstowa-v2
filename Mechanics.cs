@@ -13,9 +13,9 @@ namespace Gra_tekstowa_v2
     public class Mechanics
     {
         Render render;
-        Player player = new Player();
-        List<Projectile> bullets = new List<Projectile>();
-        List<Entity> entities = new List<Entity>();
+        Player player;
+        List<Projectile> bullets;
+        List<Entity> entities;
         Random rnd = new Random();
 
         StringBuilder sb = new StringBuilder();
@@ -27,8 +27,8 @@ namespace Gra_tekstowa_v2
         int maxEntity, minEntity;
         int playerlocation = 0;
         public volatile bool isPaused = false;
-        bool RoomsAreClear = false;
-        bool RoomIsClear = false;
+        public bool exitGenerated = false;
+        public bool playerIsDead = false;
 
         ConsoleKeyInfo cki;
         ConsoleKey keyPressed;
@@ -44,6 +44,9 @@ namespace Gra_tekstowa_v2
         void Play()
         {
             render = new Render(difficulty);
+            player = new Player();
+            bullets = new List<Projectile>();
+            entities = new List<Entity>();
             LoadRoom(playerlocation);
             
             GenerateEntities();
@@ -55,12 +58,6 @@ namespace Gra_tekstowa_v2
             EntityShootThread.Start();
         }
 
-        void RunNextRoom()
-        {
-            LoadRoom(playerlocation);
-            GenerateEntities();
-        }
-
         void LoadRoom(int location)
         {
             
@@ -68,8 +65,8 @@ namespace Gra_tekstowa_v2
             int col = 64;
             chars = new char[rows * col];
             int cursor = 0;
-            char[,] thing = render.map.RoomList[location].roomchar;
-            chars2 = render.map.RoomList[location].roomchar;
+            char[,] thing = (char[,])render.map.RoomList[location].roomchar.Clone();
+            chars2 = (char[,])render.map.RoomList[location].roomchar.Clone();
             for (int i = 0; i < rows; i++)
             {
                 for (int j = 0; j < col; j++)
@@ -78,6 +75,7 @@ namespace Gra_tekstowa_v2
                 }
             }
             render.LoadRoom(location);
+            //sb.Clear();
             sb = render.GetStringBuilder();
         }
 
@@ -85,6 +83,14 @@ namespace Gra_tekstowa_v2
         public void Resume()
         {
             isPaused = false;
+
+            player = new Player();
+            bullets = new List<Projectile>();
+            entities = new List<Entity>();
+            render = new Render(difficulty);
+            playerlocation = 0;
+            LoadRoom(playerlocation);
+            GenerateEntities();
         }
 
 
@@ -101,24 +107,58 @@ namespace Gra_tekstowa_v2
                 {
                     Console.SetCursorPosition(0, 0);
                     EnterToNeighbourRoom();
+                    OpenDoor();
                     ShowLvlAndHP();
                     ClearPlayerPosiotion();
-                    //SetPlayerPosiotion();
                     ProjectileRefresh();
                     UpdateEntities();
                     CheckPlayer();
+                    ExitFromMaze();
                     SetPlayerPosiotion();
-                    OpenDoor();
+                    
+                    if (CheckForAllroomsCleard())
+                        GenerateExit();
                     Console.Write(sb);
                 }
                 Thread.Sleep(32);
             }
         }
 
+        public bool CheckForAllroomsCleard()
+        {
+            int yes = 0;
+            foreach (var r in render.map.RoomList)
+            {
+                if (r.RoomIsClear)
+                    yes++;
+            }
+            return yes == render.map.size;
+        }
+        void ExitFromMaze()
+        {
+            int playerCoord = player.roundedY * 64 + player.roundedX;
+            char[] stringBuilder = sb.ToString().ToCharArray();
+            char znak = stringBuilder[playerCoord];
+            if (znak == '▓')
+                exitGenerated = true;
+
+        }
+        void GenerateExit()
+        {
+            int Exitgenerated = rnd.Next(0, render.map.size + 1);
+            string[] exit = { "▒▒▒▒", "▒▓▓▒", "▒▓▓▒", "▒▒▒▒" };
+            int[] coord = { 13 * 64 + 30, 14 * 64 + 30, 15 * 64 + 30, 16 * 64 + 30 };
+            if (playerlocation == Exitgenerated)
+                for (int i = 0; i < 4; i++)
+                 {
+                    sb.Remove(coord[i], 4);
+                    sb.Insert(coord[i], exit[i]);
+                }
+        }
+
         bool CheckRoomStatus()
         {
             if (entities.Count == 0)
-                if (RoomIsClear == false)
                 {
                     render.map.RoomList[playerlocation].RoomIsClear = true;
                     return true;
@@ -130,7 +170,7 @@ namespace Gra_tekstowa_v2
         void OpenDoor()
         {
             
-            if (CheckRoomStatus() && RoomIsClear)
+            if (CheckRoomStatus())
             {
                 
                 char[] tab = render.map.RoomList[playerlocation].direction;
@@ -185,43 +225,50 @@ namespace Gra_tekstowa_v2
                     case "north":
                         playerlocation = render.map.RoomList[currentPlayerLocation].direction[0];
                         player.X = 32;
+                        player.roundedX = 32;
                         player.Y = 25;
+                        player.roundedY = 25;
                         break;
                     case "south":
                         playerlocation = render.map.RoomList[currentPlayerLocation].direction[1];
                         player.X = 32;
+                        player.roundedX = 32;
                         player.Y = 5;
+                        player.roundedY = 5;
                         break;
                     case "east":
                         playerlocation = render.map.RoomList[currentPlayerLocation].direction[2];
                         player.X = 2;
+                        player.roundedX = 2;
                         player.Y = 14;
+                        player.roundedY = 14;
                         break;
                     case "west":
                         playerlocation = render.map.RoomList[currentPlayerLocation].direction[3];
                         player.X = 62;
+                        player.roundedX = 62;
                         player.Y = 14;
+                        player.roundedY = 14;
                         break;
                 }
-                Stop();
-                //LoadRoom(playerlocation);
-                //GenerateEntities();
+                sb.Clear();
+                LoadRoom(playerlocation);
+                GenerateEntities();
+                ShowLvlAndHP();
+                ClearPlayerPosiotion();
+                ProjectileRefresh();
+                UpdateEntities();
+                CheckPlayer();
+                SetPlayerPosiotion();
+                Console.Clear();
             }
         }
 
         void SetPlayerPosiotion()
         {
-            bool playerEnemyColision = false;
             int coord = player.roundedY * 64 + player.roundedX;
             char[] znaki = sb.ToString().ToCharArray();
             char lastchar = znaki[coord];
-            //if (!playerEnemyColision && player.ColisionWithEntity(entities))
-            //{
-            //    player.HealthPoints--;
-            //    playerEnemyColision = true;
-            //}
-            ////player.ColisionWithEntity(entities);
-
             player.ColisionWithEntity(entities);
             sb.Replace(lastchar, 'X', coord, 1);
             sb.Replace(lastchar, 'Q', coord - 64, 1);
@@ -366,7 +413,7 @@ namespace Gra_tekstowa_v2
                 player.HealthPoints += 1;
             }
             if (player.HealthPoints == 0)
-                Environment.Exit(0);
+                playerIsDead = true;
         }
 
         public void PlayerAction()
@@ -428,6 +475,7 @@ namespace Gra_tekstowa_v2
             string ToWrite = "Aby kontynuować wciśnij dowolny przycisk";
             Console.SetCursorPosition((Console.WindowWidth / 2) - (ToWrite.Length / 2), Console.WindowHeight / 2);
             Console.Write(ToWrite);
+            Console.WriteLine(" W / S - góra/dół, ENTER - zatwierdź");
             Console.ReadKey();
             switch ( ChoosenOption )
             {
@@ -453,7 +501,7 @@ namespace Gra_tekstowa_v2
         void DifficultyLevelMenu()
         {
             string[] options = { "Easy", "Medium", "Hard" };
-            Menu LevelMenu = new Menu(options, "  ");
+            Menu LevelMenu = new Menu(options, "Wybierz poziom trudności:");
             int ChoosenOption = LevelMenu.Run();
             switch (ChoosenOption)
             {
@@ -550,7 +598,7 @@ namespace Gra_tekstowa_v2
             {
                 case 0:
                     isPaused = false;
-                    Resume();
+                    //Resume();
                     break;
                 case 1:
                     isPaused = true;
@@ -560,6 +608,51 @@ namespace Gra_tekstowa_v2
                     Environment.Exit(0); ;
                     break;
             }
+        }
+        public void DeadMenu()
+        {
+            playerIsDead = false;
+            exitGenerated = false;
+            string[] about = {
+                "Niestety nie udało Ci się znaleźć wyjścia.",
+                "Umarłeś i zostałeś zapomiany przez wszystkich.",
+                "Tak kończą Ci którym się nie udało."
+            };
+            int WidthSize = Console.WindowWidth;
+            int HeightSize = Console.WindowHeight;
+            int OptionQuantity = about.Length;
+            int MiddlePointX = WidthSize / 2;
+            int MiddlePointY = (HeightSize / 3) - (OptionQuantity / 2);
+
+            Console.Clear();
+            for (int i = 0; i < about.Length; i++)
+            {
+                string currentline = about[i];
+                Console.SetCursorPosition(MiddlePointX - (currentline.Length / 2), MiddlePointY + 1 + i);
+                Console.Write(currentline);
+            }
+            Console.WriteLine();
+            string ToWrite = "Aby wrócić wciśnij dowolny przycisk";
+            Console.SetCursorPosition((Console.WindowWidth / 2) - (ToWrite.Length / 2), Console.WindowHeight / 2);
+            Console.WriteLine(ToWrite);
+            Console.ReadKey();
+            playerIsDead = false;
+            exitGenerated = false;
+
+            //RunMainMenu();
+        }
+        public void ExitMenu()
+        {
+            Console.Clear();
+
+
+            string[] option = { "Wróć do menu" };
+            Menu EndText = new Menu(option, "Gratulacje! Udało Ci się znaleźć wyjście!");
+            int opcja = EndText.Run();
+            Console.ReadKey(true);
+            playerIsDead = false;
+            exitGenerated = false;
+
         }
     }
 }

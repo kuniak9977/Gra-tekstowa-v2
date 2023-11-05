@@ -48,9 +48,10 @@ namespace Gra_tekstowa_v2
         {
             //Console.Clear();
             //Console.SetCursorPosition(0, 0);
-            char[,] roomschar = map.RoomList[playerlocation].roomchar;
+            char[,] roomschar = (char[,])map.RoomList[playerlocation].roomchar.Clone();
             int numRows = roomschar.GetLength(0);
             int numCol = roomschar.GetLength(1);
+            stringbuilder.Clear();
             for (int i = 0; i < numRows; i++)
             {
                 for (int j = 0; j < numCol; j++)
@@ -72,7 +73,8 @@ namespace Gra_tekstowa_v2
     {
         public List<Node> RoomList = new List<Node>();
         Rooms AvaibleRooms;
-        int size;
+        public int size;
+        Random rnd = new Random();
         public Map(Rooms rooms,int size)
         {
             this.AvaibleRooms = rooms;
@@ -81,7 +83,7 @@ namespace Gra_tekstowa_v2
 
         public void GenrateMap()
         {
-            Random rnd = new Random();
+            
             int i = 0;
             while (RoomList.Count < size)
             {
@@ -94,24 +96,26 @@ namespace Gra_tekstowa_v2
                     Node room = new Node(AvaibleRooms.room[RoomType]);
                     RoomList.Add(room);
                 }
-
+                check:
                 if (RoomList[i].Neighbours.Count < 4)
                 {
                     int currentConection = RoomList[i].Neighbours.Count;
-                    int roomsToAdd = rnd.Next(2, 4);
+                    int roomsToAdd = rnd.Next(1, 5);
                     int toAdd = roomsToAdd - currentConection;
                     int allRooms = RoomList.Count + toAdd;
 
                     if (allRooms <= size)
                     {
+                        if (toAdd == 0)
+                            i--;
                         for (int j = 1; j <= toAdd; j++)
                         {
                             RoomType = rnd.Next(0, AvaibleRooms.room.Count);
                             Node room = new Node(AvaibleRooms.room[RoomType]);
                             RoomList.Add(room);
-                            int randDirection = rnd.Next(0, 3);
+                            int randDirection = rnd.Next(0, 4);
                             while (RoomList[i].direction[randDirection] != ' ')
-                                randDirection = rnd.Next(0, 3);
+                                randDirection = rnd.Next(0, 4);
                             int AddedRoomIndex = RoomList.Count - 1;
                             switch (randDirection)
                             {
@@ -141,6 +145,10 @@ namespace Gra_tekstowa_v2
                                     break;
                             }
                         }
+                    }
+                    else
+                    {
+                        goto check;
                     }
                 }
                 i++;

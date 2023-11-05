@@ -12,6 +12,7 @@ namespace Gra_tekstowa_v2
 
         public Rooms()
         {
+            //string[] lines = File.ReadAllLines("C:\\Users\\kuniak9977\\Desktop\\projekt tekstowy kck ps\\Gra tekstowa v2\\bin\\Debug\\net6.0\\rooms.txt");
             string[] lines = File.ReadAllLines("rooms.txt");
             int numRows = lines.Length;
             int numCol = lines[0].Length;
